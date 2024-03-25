@@ -17,7 +17,7 @@ def load(fileName):
         i+=1
         fields = line.split(',')
         x = np.array([float(fields[0]), float(fields[1]), float(fields[2]), float(fields[3])])
-        x = x.reshape(x.size, 1)
+        x = mcol(x)
         
         l = -1
         match fields[4].replace('\n', ''):
