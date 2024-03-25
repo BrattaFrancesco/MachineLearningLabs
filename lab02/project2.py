@@ -68,7 +68,7 @@ def covarianceMatrix(D, mu):
     return C
 
 if __name__ == "__main__":
-    fileName = "datasets/trainData.txt"
+    fileName = "datasets/trainData.csv"
 
     D, L = load(fileName)
     #plotHistograms(D,L)
