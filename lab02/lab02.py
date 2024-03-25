@@ -104,7 +104,7 @@ def covarianceMatrix(D, mu):
     return C
 
 if __name__ == '__main__':
-    fileName = "dataset/iris.csv"
+    fileName = "datasets/iris.csv"
     #D[0]-> sepal lenght
     #D[1]-> sepal width
     #D[2]-> petal lenght
