@@ -139,10 +139,10 @@ if __name__ == "__main__":
     print()
 
     print("LDA calculation")
-    Sw = withinCovarianceMatrix([D[:, L == 0], D[:, L == 1], D[:, L == 2]])
-    print("Within class covariance matrix:")
-    print(Sw)
     Sb = betweenCovarianceMatrix([D[:, L == 0], D[:, L == 1], D[:, L == 2]], mu)
     print("Between class covariance matrix")
     print(Sb)
+    Sw = withinCovarianceMatrix([D[:, L == 0], D[:, L == 1], D[:, L == 2]])
+    print("Within class covariance matrix:")
+    print(Sw)
     
