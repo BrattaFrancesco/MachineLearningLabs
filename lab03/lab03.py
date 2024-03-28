@@ -40,26 +40,45 @@ def datasetMean(D):
     DC = D - mu
     return DC, mu
 
-def covarianceMatrix(DC, mu):
-    C = ((DC) @ (DC).T) / float(D.shape[1])
+def covarianceMatrix(DC,NSamples):
+    C = ((DC) @ (DC).T) / float(NSamples)
     return C
 
 def PCA(C, m, D):
     #get eigenvalues and eigenvectors, sorted from the smaller to the largest
     _, U = np.linalg.eigh(C)
 
-    P = U[:, ::-1][:, 0:m]
-
-    P = U[:, 0:m]
-
     #computing SVD
     U, _, _ = np.linalg.svd(C)
 
+    P = U[:, :m]
+
     DP = np.dot(P.T, D)
 
-    return DP, U
+    return DP, P
 
-def plotScatters(D, L):
+def withinCovarianceMatrix(Ds):
+    matrixSum = np.zeros((Ds[0].shape[0], Ds[0].shape[0]))
+    samplesSum = 0
+    for Dclass in Ds:
+        DC, _ = datasetMean(Dclass)
+        C = covarianceMatrix(DC,Dclass.shape[1])
+        matrixSum = matrixSum + np.dot(Dclass.shape[1], C)
+        samplesSum = samplesSum + Dclass.shape[1]
+    
+    return matrixSum / float(samplesSum)
+
+def betweenCovarianceMatrix(Ds, mu):
+    matrixSum = np.zeros((Ds[0].shape[0], 1))
+    sampleSum = 0
+    for Dclass in Ds:
+        _, classMean = datasetMean(Dclass)
+        x = np.dot((classMean - mu), (classMean - mu).T)
+        matrixSum = matrixSum + np.dot(Dclass.shape[1], x)
+        sampleSum = sampleSum + Dclass.shape[1]
+    return matrixSum / float(sampleSum)
+
+def plotScatters(D, L, directions = None):
     #set te columns with iris setosa to true, others to false; select from the dataset only iris setosa
     #setosa
     D0 = D[:, L == 0]
@@ -68,15 +87,24 @@ def plotScatters(D, L):
     #virginica
     D2 = D[:, L == 2]
 
-    rows, _ = D.shape
-    for i in range(rows):
-        for j in range(rows):
-            if(i != j):
-                plt.figure()
-                plt.scatter(D0[i, :], D0[j, :], label="Setosa")
-                plt.scatter(D1[i, :], D1[j, :], label="Versicolor")
-                plt.scatter(D2[i, :], D2[j, :], label="Virginica")
-                plt.legend()
+    if (directions is None):
+        rows, _ = D.shape
+        for i in range(rows):
+            for j in range(rows):
+                if(i != j):
+                    plt.figure()
+                    plt.scatter(D0[i, :], D0[j, :], label="Setosa")
+                    plt.scatter(D1[i, :], D1[j, :], label="Versicolor")
+                    plt.scatter(D2[i, :], D2[j, :], label="Virginica")
+                    plt.legend()
+            plt.show()
+    else:
+        i = directions[0]
+        j = directions[1]
+        plt.scatter(D0[i, :], D0[j, :], label="Setosa")
+        plt.scatter(D1[i, :], D1[j, :], label="Versicolor")
+        plt.scatter(D2[i, :], D2[j, :], label="Virginica")
+        plt.legend()
         plt.show()
 
 if __name__ == "__main__":
@@ -87,19 +115,34 @@ if __name__ == "__main__":
     #D[3]-> petal width
     D, L = load(fileName)
 
+    #standardize the dataset arount the mean
     DC, mu = datasetMean(D)
-    C = covarianceMatrix(DC, mu)
+    C = covarianceMatrix(DC, D.shape[1])
 
-    print("Mean:")
+    print("Mean(µ):")
     print(mu)
-    print("Covariance matrix:")
+    print("Covariance matrix(C):")
     print(C)
+    print()
 
+    #calculate the PCA with new dimensionality, in this case always 4
     print("PCA m = 4")
     pca4, U4 = PCA(C, 4, D)
     print("Mine eighen vectors: ")
     print(U4)
-    a = np.load("lab03\\results\\IRIS_PCA_matrix_m4.npy")
-    print("Prof eighen vectors:")
-    print(a) 
+    solution = np.load("lab03\\results\\IRIS_PCA_matrix_m4.npy")
+    print("Solution eighen vectors:")
+    print(solution) 
+    print(D[:, :10])
+    print(pca4[:, :10])
+    #plotScatters(pca4, L, [0,1])
+    print()
+
+    print("LDA calculation")
+    Sw = withinCovarianceMatrix([D[:, L == 0], D[:, L == 1], D[:, L == 2]])
+    print("Within class covariance matrix:")
+    print(Sw)
+    Sb = betweenCovarianceMatrix([D[:, L == 0], D[:, L == 1], D[:, L == 2]], mu)
+    print("Between class covariance matrix")
+    print(Sb)
     
