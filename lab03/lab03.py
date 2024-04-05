@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.linalg as lalg
 
 def mcol(v):
     return v.reshape((v.size, 1))
@@ -51,6 +52,9 @@ def PCA(C, m, D):
     #computing SVD
     U, _, _ = np.linalg.svd(C)
 
+    #changing the sign of an eigenvector to flip the image in the scatterplot
+    U[:,1] = -U[:,1]
+    
     P = U[:, :m]
 
     DP = np.dot(P.T, D)
@@ -77,6 +81,41 @@ def betweenCovarianceMatrix(Ds, mu):
         matrixSum = matrixSum + np.dot(Dclass.shape[1], x)
         sampleSum = sampleSum + Dclass.shape[1]
     return matrixSum / float(sampleSum)
+
+def generalizedEigvalLDA(Sb, Sw, m, D):
+    #solving the generalized eigenvalue problem to find W (matrix in which columns are the directions of LDA)
+    _, U = lalg.eigh(Sb, Sw)
+    W = U[:, ::-1][:, 0:m]
+
+    #finding basis U for the subspace spanned by W
+    UW, _, _ = lalg.svd(W) 
+    U = UW[:, 0:m]
+
+    #calculating LDA for the givend dataset
+    LDA = np.dot(W.T, D)
+
+    return W, U, LDA
+
+def jointDiagonalLDA(Sb, Sw, m, D):
+    #computing P1= U*Σ−1/2*U.T
+    #Where s contains thr diagonal of Σ, and the diagonal of Σ-1/2 = diag(1.0/(s**0.5))
+    U, s, _ = np.linalg.svd(Sw)
+
+    P1 = np.dot( np.dot( U, np.diag(1.0/(s**0.5))), U.T )
+
+    #computing P2 as eigenvector of Sbt = P1*Sb*P1.T
+    Sbt = np.dot( np.dot( P1, Sb ), P1.T )
+
+    _, U = np.linalg.eigh(Sbt)
+    P2 = U[:, :m]
+
+    #find W matrix of direction of LDA
+    W = np.dot( P1.T, P2 )
+
+    #project the dataset on W to find the LDA
+    LDA = np.dot( W.T, D )
+
+    return W, LDA
 
 def plotScatters(D, L, directions = None):
     #set te columns with iris setosa to true, others to false; select from the dataset only iris setosa
@@ -125,24 +164,39 @@ if __name__ == "__main__":
     print(C)
     print()
 
+    #################################PCA####################################
+    
     #calculate the PCA with new dimensionality, in this case always 4
+    print("PCA calculation...")
     print("PCA m = 4")
     pca4, U4 = PCA(C, 4, D)
     print("Mine eighen vectors: ")
     print(U4)
     solution = np.load("lab03\\results\\IRIS_PCA_matrix_m4.npy")
     print("Solution eighen vectors:")
-    print(solution) 
-    print(D[:, :10])
-    print(pca4[:, :10])
+    print(solution)
     #plotScatters(pca4, L, [0,1])
     print()
 
-    print("LDA calculation")
+    #################################LDA####################################
+    
+    print("LDA calculation...")
     Sb = betweenCovarianceMatrix([D[:, L == 0], D[:, L == 1], D[:, L == 2]], mu)
     print("Between class covariance matrix")
     print(Sb)
     Sw = withinCovarianceMatrix([D[:, L == 0], D[:, L == 1], D[:, L == 2]])
     print("Within class covariance matrix:")
     print(Sw)
-    
+
+    print("My generalized eigvalue problem LDA matrix(m=2):")
+    W, _, ldaGen2 = generalizedEigvalLDA(Sb, Sw, 2, D)
+    print(W)
+    print("My joint diagonalization problem LDA matrix(m=2):")
+    W, _, ldaDiag2 = generalizedEigvalLDA(Sb, Sw, 2, D)
+    print(W)
+    solution = np.load("lab03\\results\\IRIS_LDA_matrix_m2.npy")
+    print("Solution LDA matrix(m=2):")
+    print(solution)
+
+    plotScatters(ldaGen2, L, [0,1])
+    plotScatters(ldaDiag2, L, [0,1])
