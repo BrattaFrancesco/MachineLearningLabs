@@ -117,6 +117,22 @@ def jointDiagonalLDA(Sb, Sw, m, D):
 
     return W, LDA
 
+def plotHistogram(D, L, direction):
+    #set te columns with iris setosa to true, others to false; select from the dataset only iris setosa
+    #setosa
+    D0 = D[:, L == 0]
+    #versicolor
+    D1 = D[:, L == 1]
+    #virginica
+    D2 = D[:, L == 2]
+
+    plt.hist(D0[direction,:], density=True, alpha=0.5, label="Setosa")
+    plt.hist(D1[direction,:], density=True, alpha=0.5, label="Versicolor")
+    plt.hist(D2[direction,:], density=True, alpha=0.5, label="Virginica")
+    plt.xlabel(direction)
+    plt.legend()
+    plt.show()
+
 def plotScatters(D, L, directions = None):
     #set te columns with iris setosa to true, others to false; select from the dataset only iris setosa
     #setosa
@@ -175,7 +191,8 @@ if __name__ == "__main__":
     solution = np.load("lab03\\results\\IRIS_PCA_matrix_m4.npy")
     print("Solution eighen vectors:")
     print(solution)
-    #plotScatters(pca4, L, [0,1])
+    plotScatters(pca4, L, [0,1])
+    plotHistogram(pca4, L, 0)
     print()
 
     #################################LDA####################################
@@ -197,6 +214,6 @@ if __name__ == "__main__":
     solution = np.load("lab03\\results\\IRIS_LDA_matrix_m2.npy")
     print("Solution LDA matrix(m=2):")
     print(solution)
-
-    plotScatters(ldaGen2, L, [0,1])
+    
     plotScatters(ldaDiag2, L, [0,1])
+    plotHistogram(ldaDiag2, L, 0)
