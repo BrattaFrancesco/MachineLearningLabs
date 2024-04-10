@@ -163,5 +163,25 @@ if __name__ == "__main__":
     #we observe that the PCA is not that effective as the LDA
 
     #########################LDA + PCA classificator#######################
+    DtrC, mu = datasetMean(DTR)
+    Ctr = covarianceMatrix(DtrC, DTR.shape[1])
+
+    _, P = PCA(Ctr, 2, DTR)
     
-    
+    DTR_pca = np.dot( P.T, DTR )
+    DVAL_pca = np.dot( P.T, DVAL )
+
+    _, mu = datasetMean(DTR_pca)
+    Sb = betweenCovarianceMatrix([DTR_pca[:, LTR == 1], DTR_pca[:, LTR == 2]], mu)
+    Sw = withinCovarianceMatrix([DTR_pca[:, LTR == 1], DTR_pca[:, LTR == 2]])
+
+    W, _, _ = generalizedEigvalLDA(Sb, Sw, 1, DTR_pca)
+
+    DTR_lda = np.dot( W.T, DTR_pca )
+    DVAL_lda = np.dot( W.T, DVAL_pca )
+
+    plotHistogram(DTR_lda, LTR, 0)
+    plotHistogram(DVAL_lda, LVAL, 0)
+    predVal = LDAClassificator(DTR_lda, DVAL_lda, LTR, LVAL)
+
+    print(predVal[predVal != LVAL].shape[0]/predVal.shape[0])
