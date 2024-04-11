@@ -74,6 +74,15 @@ def generalizedEigvalLDA(Sb, Sw, m, D):
 
     return W, U, LDA
 
+def LDAClassificator(DTR, DVAL, LTR, LVAL):
+    threshold = (DTR[0, LTR == 1].mean() + DTR[0, LTR == 2].mean()) / 2.0 # We only have one dimension in the projected Dataset
+    
+    PredVal = np.zeros(shape=LVAL.shape, dtype=np.int32)
+    PredVal[DVAL[0] >= threshold] = 2
+    PredVal[DVAL[0] < threshold] = 1
+
+    return PredVal
+
 def PCA(C, m, D):
     #get eigenvalues and eigenvectors, sorted from the smaller to the largest
     _, U = np.linalg.eigh(C)
@@ -117,15 +126,6 @@ def plotHistogram(D, L, direction):
     plt.legend()
     plt.show()
 
-def LDAClassificator(DTR, DVAL, LTR, LVAL):
-    threshold = (DTR[0, LTR == 1].mean() + DTR[0, LTR == 2].mean()) / 2.0 # We only have one dimension in the projected Dataset
-    
-    PredVal = np.zeros(shape=LVAL.shape, dtype=np.int32)
-    PredVal[DVAL[0] >= threshold] = 2
-    PredVal[DVAL[0] < threshold] = 1
-
-    return PredVal
-
 if __name__ == "__main__":                                                            
     DIris, LIris = load_iris() 
     D = DIris[:, LIris != 0] 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     #plotHistogram(DVAL_lda, LVAL, 0)
     predVal = LDAClassificator(DTR_lda, DVAL_lda, LTR, LVAL)
 
-    print(predVal[predVal != LVAL].shape[0]/predVal.shape[0])
+    print("Error rate: ", predVal[predVal != LVAL].shape[0]/predVal.shape[0])
 
     #########################PCA classificator#############################
     DtrC, mu = datasetMean(DTR)
