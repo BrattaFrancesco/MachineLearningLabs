@@ -10,15 +10,14 @@ def mcol(v):
 def logpdf_GAU_ND(X, mu, C):
     Y = []
     N = X.shape[0]
+    logC = np.linalg.slogdet(C)[1]
+    invC = np.linalg.inv(C)
+    const = N*np.log(2*np.pi)
 
     for x in X.T:
         x = mcol(x)
-
-        const = N*np.log(2*np.pi)
-
-        logC = np.linalg.slogdet(C)[1]
-
-        mult = np.dot(np.dot( (x-mu).T, np.linalg.inv(C)), (x-mu))[0, 0]
+        xMinusMu = (x-mu)
+        mult = np.dot(np.dot( xMinusMu.T, invC), xMinusMu)[0, 0]
 
         Y.append(-0.5*(const+logC+mult))
     return np.array(Y)
