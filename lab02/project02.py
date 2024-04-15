@@ -88,7 +88,7 @@ if __name__ == "__main__":
         classDC, classMu = datasetMean(classD)
 
         print("Mean: ", classMu)
-        print("Covariance matrix: \n", classDC)
+        print("Covariance matrix: \n", classDC) #!!!!!?????
 
         var = classD.var(1)
         std = classD.std(1)
