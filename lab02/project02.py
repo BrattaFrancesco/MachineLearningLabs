@@ -38,7 +38,7 @@ def plotHistograms(D, L):
         plt.hist(D1[i,:], density=True, alpha=0.5, label="Genuine")
         plt.xlabel("Feature %d" %i)
         plt.legend()
-        plt.savefig("lab02\\plots\\hists\\hist_feature%d.pdf" %i)
+        plt.savefig("lab02\\plots\\hists\\hist_feature%d.png" %i)
     plt.show()
 
 def plotScatters(D, L):
@@ -55,7 +55,7 @@ def plotScatters(D, L):
                 plt.scatter(D0[i, :], D0[j, :], label="Fake")
                 plt.scatter(D1[i, :], D1[j, :], label="Genuine")
                 plt.legend()
-                plt.savefig("lab02\\plots\\scatters\\scatter_x%d_y%d.pdf" % (i, j))
+                plt.savefig("lab02\\plots\\scatters\\scatter_x%d_y%d.png" % (i, j))
         plt.show()
 
 def datasetMean(D):
@@ -71,8 +71,8 @@ if __name__ == "__main__":
     fileName = "datasets/trainData.csv"
 
     D, L = load(fileName)
-    #plotHistograms(D,L)
-    #plotScatters(D,L)
+    plotHistograms(D,L)
+    plotScatters(D,L)
 
     DC, mu = datasetMean(D)
     C = covarianceMatrix(D, mu)

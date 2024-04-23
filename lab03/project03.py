@@ -49,7 +49,7 @@ def plotHistograms(D, L, direction, prefix_filename):
     plt.hist(D1[direction,:], density=True, alpha=0.5, label="Genuine")
     plt.xlabel("Feature %d" %direction)
     plt.legend()
-    plt.savefig("lab03\\plots\\hists\\%s%d.pdf" %(prefix_filename, direction))
+    plt.savefig("lab03\\plots\\hists\\%s%d.png" %(prefix_filename, direction))
     plt.figure()
 
 def datasetMean(D):
@@ -121,8 +121,8 @@ def LDAClassificator(DTR, DVAL, LTR, LVAL):
     threshold = (DTR[0, LTR == 0].mean() + DTR[0, LTR == 1].mean()) / 2.0 # We only have one dimension in the projected Dataset
     
     PredVal = np.zeros(shape=LVAL.shape, dtype=np.int32)
-    PredVal[DVAL[0] >= threshold] = 2
-    PredVal[DVAL[0] < threshold] = 1
+    PredVal[DVAL[0] >= threshold] = 1
+    PredVal[DVAL[0] < threshold] = 0
 
     return PredVal
 
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     #################################PCA####################################
     
     #calculate the PCA with new dimensionality, in this case always 4
-    print("PCA calculation...")
+    print("Task 1\nPCA calculation...")
     print("PCA m = 6")
     pca, _= PCA(C, 6, D)
     
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     #################################LDA####################################
     
-    print("LDA calculation...")
+    print("Task 2\nLDA calculation...")
     Sb = betweenCovarianceMatrix([D[:, L == 0], D[:, L == 1]], mu)
     print("Between class covariance matrix")
     print(Sb)
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     W, _, ldaGen = generalizedEigvalLDA(Sb, Sw, 1, D)
     print(W)
     print("My joint diagonalization problem LDA matrix(m=1):")
-    W, _, ldaDiag = generalizedEigvalLDA(Sb, Sw, 1, D)
+    W, ldaDiag = jointDiagonalLDA(Sb, Sw, 1, D)
     print(W)
     
     ldaGen = -ldaGen
@@ -192,6 +192,7 @@ if __name__ == "__main__":
     plotHistograms(ldaDiag, L, 0, "lda_diag_dimensionality_")
     
     ########################LDA classificator##############################
+    print("Task 3\nLDA classificator")
     (DTR, LTR), (DVAL, LVAL) = split_db_2to1(D, L)
     
     _, mu = datasetMean(DTR)
@@ -207,28 +208,33 @@ if __name__ == "__main__":
     plotHistograms(DVAL_lda, LVAL, 0, "DVAL_lda_dimensionality_")
     predVal = LDAClassificator(DTR_lda, DVAL_lda, LTR, LVAL)
 
+    print("Predicted:\t", predVal)
+    print("Actual:\t", LVAL)
+
     print("Error rate: ", predVal[predVal != LVAL].shape[0]/predVal.shape[0])
 
     #########################LDA + PCA classificator#######################
+    print("Task 5\n LDA + PCA")
     DtrC, mu = datasetMean(DTR)
     Ctr = covarianceMatrix(DtrC, DTR.shape[1])
 
-    _, P = PCA(Ctr, 2, DTR)
-    
-    DTR_pca = np.dot( P.T, DTR )
-    DVAL_pca = np.dot( P.T, DVAL )
+    for m in [2,3,4,5]:
+        _, P = PCA(Ctr, m, DTR)
+        
+        DTR_pca = np.dot( P.T, DTR )
+        DVAL_pca = np.dot( P.T, DVAL )
 
-    _, mu = datasetMean(DTR_pca)
-    Sb = betweenCovarianceMatrix([DTR_pca[:, LTR == 0], DTR_pca[:, LTR == 1]], mu)
-    Sw = withinCovarianceMatrix([DTR_pca[:, LTR == 0], DTR_pca[:, LTR == 1]])
+        _, mu = datasetMean(DTR_pca)
+        Sb = betweenCovarianceMatrix([DTR_pca[:, LTR == 0], DTR_pca[:, LTR == 1]], mu)
+        Sw = withinCovarianceMatrix([DTR_pca[:, LTR == 0], DTR_pca[:, LTR == 1]])
 
-    W, _, _ = generalizedEigvalLDA(Sb, Sw, 1, DTR_pca)
+        W, _, _ = generalizedEigvalLDA(Sb, Sw, 1, DTR_pca)
 
-    DTR_lda = -np.dot( W.T, DTR_pca )
-    DVAL_lda = -np.dot( W.T, DVAL_pca )
+        DTR_lda = np.dot( W.T, DTR_pca )
+        DVAL_lda = np.dot( W.T, DVAL_pca )
 
-    plotHistograms(DTR_lda, LTR, 0, "DTR_lda_prepca_dimensionality_")
-    plotHistograms(DVAL_lda, LVAL, 0, "DVAL_lda_prepca_dimensionality_")
-    predVal = LDAClassificator(DTR_lda, DVAL_lda, LTR, LVAL)
+        plotHistograms(DTR_lda, LTR, 0, f"DTR_lda_prepca_m={m}_dimensionality_")
+        plotHistograms(DVAL_lda, LVAL, 0, f"DVAL_lda_prepca_m={m}_dimensionality_")
+        predVal = LDAClassificator(DTR_lda, DVAL_lda, LTR, LVAL)
 
-    print("Error rate (PCA preprocessing): ", predVal[predVal != LVAL].shape[0]/predVal.shape[0])
+        print(f"Error rate (m={m}): ", predVal[predVal != LVAL].shape[0]/predVal.shape[0])
