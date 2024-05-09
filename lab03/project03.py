@@ -218,7 +218,7 @@ if __name__ == "__main__":
     DtrC, mu = datasetMean(DTR)
     Ctr = covarianceMatrix(DtrC, DTR.shape[1])
 
-    for m in [2,3,4,5]:
+    for m in [2,3,4,5,6]:
         _, P = PCA(Ctr, m, DTR)
         
         DTR_pca = np.dot( P.T, DTR )

@@ -57,7 +57,6 @@ if __name__ == "__main__":
     print(ll)
 
     X1D = np.load('lab04/solutions/X1D.npy')
-    print(X1D)
     DC, m_ML = datasetMean(X1D)
     C_ML = covarianceMatrix(DC, X1D.shape[1])
 
@@ -66,3 +65,6 @@ if __name__ == "__main__":
     XPlot = np.linspace(-8, 12, 1000)
     plt.plot(XPlot.ravel(), np.exp(logpdf_GAU_ND(vrow(XPlot), m_ML, C_ML)))
     plt.show()
+
+    ll = loglikelihood(X1D, m_ML, C_ML)
+    print(ll)
