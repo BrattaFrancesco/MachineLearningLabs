@@ -147,7 +147,7 @@ if __name__ == "__main__":
     #plotHistogram(DVAL_lda, LVAL, 0)
     predVal = LDAClassificator(DTR_lda, DVAL_lda, LTR, LVAL)
 
-    print("Error rate: ", predVal[predVal != LVAL].shape[0]/predVal.shape[0])
+    print("Error rate: ", np.round(predVal[predVal != LVAL].shape[0]/predVal.shape[0]*100, 1))
 
     #########################PCA classificator#############################
     DtrC, mu = datasetMean(DTR)

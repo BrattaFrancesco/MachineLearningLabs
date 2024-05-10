@@ -149,7 +149,6 @@ if __name__ == "__main__":
     DC1, mu1 = datasetMean(DTR[:, LTR == 1])
     DC2, mu2 = datasetMean(DTR[:, LTR == 2])
     withinC = withinCovarianceMatrix([DC0, DC1, DC2])
-    print(withinC)
     LL0, ll0 = loglikelihood(DTE, mu0, withinC)
     LL1, ll1 = loglikelihood(DTE, mu1, withinC)
     LL2, ll2 = loglikelihood(DTE, mu2, withinC)
@@ -163,3 +162,45 @@ if __name__ == "__main__":
     SPost = logPostProb(logS, prior)
     acc, err = validate(SPost, LTE)
     print("\tError rate(log-densities): ", np.round(err*100), "%")
+
+    #####Binary tasks: log-likelihood ratios and MVG#####
+    #################Part 1###################
+    D = D[:, L != 0] 
+    L = L[L != 0]
+
+    (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
+
+    DC1, mu1 = datasetMean(DTR[:, LTR == 1])
+    C1 = covarianceMatrix(DC1, DC1.shape[1])
+    LL1, _ = loglikelihood(DTE, mu1, C1)
+
+    DC2, mu2 = datasetMean(DTR[:, LTR == 2])
+    C2 = covarianceMatrix(DC2, DC2.shape[1])
+    LL2, _ = loglikelihood(DTE, mu2, C2)
+
+    llRatio = LL2 - LL1
+
+    #Threshold (t) = -log(P(C = 2) / P(C = 1)) = 0, where P(C = 2) = P(C = 1) = 1/2
+    #label2 if llR >= t, label1 otherwise
+    t = 0
+    pred = np.array(list(map(lambda x: 2 if x >= t else 1, llRatio)))
+    
+    print("Binary tasks: MVG ML")
+    acc, err = validate(pred, LTE)
+    print("\tError rate(MVG ML): ", np.round(err*100, 1), "%")
+
+    #################Part 2###################
+    DC1, mu1 = datasetMean(DTR[:, LTR == 1])
+    DC2, mu2 = datasetMean(DTR[:, LTR == 2])
+    withinC = withinCovarianceMatrix([DC1, DC2])
+    LL1, _ = loglikelihood(DTE, mu1, withinC)
+    LL2, _ = loglikelihood(DTE, mu2, withinC)
+
+    llRatio = LL2 - LL1
+
+    t = 0
+    pred = np.array(list(map(lambda x: 2 if x >= t else 1, llRatio)))
+    
+    print("Binary tasks: tied model")
+    acc, err = validate(pred, LTE)
+    print("\tError rate(tied): ", np.round(err*100, 1), "%")
