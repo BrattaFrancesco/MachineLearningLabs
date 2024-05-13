@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 import scipy.linalg as lalg
+import matplotlib.pyplot as plt
 
 def load(fileName):
     print("Loading dataset...")
@@ -124,17 +125,18 @@ def logPostProb(S, prior):
     SPost = np.argmax(np.exp(logSPost), axis=0)
     return SPost
 
-def validate(SPost, LTE):
-    acc = ((SPost == LTE).sum()/LTE.shape)[0]
+def validate(pred, LTE):
+    acc = ((pred == LTE).sum()/LTE.shape)[0]
     err = 1-acc
     return acc, err
 
-if __name__ == "__main__":
-    fileName = "datasets/trainData.csv"
+def classification(DTR, LTR, DTE, LTE, startingFeature, endingFeature):
+    startingFeature = startingFeature - 1
+    DTR = DTR[startingFeature:endingFeature]
+    DTE = DTE[startingFeature:endingFeature]
 
-    D, L = load(fileName)
-    (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
-
+    print("\n################################\nStarting classification...\nFeature from ", startingFeature + 1, "to", endingFeature,
+          "\n################################\n")
     #################MVG#####################
     DC0, mu0 = datasetMean(DTR[:, LTR == 0])
     C0 = covarianceMatrix(DC0, DC0.shape[1])
@@ -188,11 +190,11 @@ if __name__ == "__main__":
     #####Naive Bayes Gaussian Classifier######
     DC0, mu0 = datasetMean(DTR[:, LTR == 0])
     C0 = np.diag(np.diag(covarianceMatrix(DC0, DC0.shape[1])))
-    LL0, ll0 = loglikelihood(DTE, mu0, C0)
+    LL0, _ = loglikelihood(DTE, mu0, C0)
 
     DC1, mu1 = datasetMean(DTR[:, LTR == 1])
     C1 = np.diag(np.diag(covarianceMatrix(DC1, DC1.shape[1])))
-    LL1, ll1 = loglikelihood(DTE, mu1, C1)
+    LL1, _ = loglikelihood(DTE, mu1, C1)
 
     llRatio = LL1 - LL0
 
@@ -202,3 +204,80 @@ if __name__ == "__main__":
     print("Binary tasks: Naive Bayes Gaussian Classifier")
     acc, err = validate(pred, LTE)
     print("\tError rate(Naive Bayes): ", np.round(err*100, 1), "%")
+
+def correlation(DTR, LTR, DTE, LTE):
+    DC0, _ = datasetMean(DTR[:, LTR == 0])
+    C0 = covarianceMatrix(DC0, DC0.shape[1])
+    DC1, _ = datasetMean(DTR[:, LTR == 1])
+    C1 = covarianceMatrix(DC1, DC1.shape[1])
+
+    print("Covariance matrix class 0")
+    print(C0)
+    print("Covariance matrix class 1")
+    print(C1)
+
+    Corr0 = C0 / ( mcol(C0.diagonal()**0.5) * vrow(C0.diagonal()**0.5) )
+    Corr1 = C1 / ( mcol(C1.diagonal()**0.5) * vrow(C1.diagonal()**0.5) )
+
+    print("Correlation matrix class 0")
+    print(Corr0)
+    print("Correlation matrix class 1")
+    print(Corr1)
+
+def gaussianAssupmtion(DTR, LTR):
+    for cls in range(2):
+        print("Class: ", cls)
+
+        for feature in range(6):
+            classD = vrow(DTR[feature, LTR == cls])
+            classDC, class_m_ML = datasetMean(classD)
+            class_C_ML = covarianceMatrix(classDC, classD.shape[1])
+
+            plt.figure()
+            plt.hist(classD.ravel(), bins=50, density=True, label="class_"+str(cls)+"_feature_"+str(feature))
+            XPlot = np.linspace(-8, 12, 1000)
+            plt.legend()
+            plt.plot(XPlot.ravel(), np.exp(logpdf_GAU_ND(vrow(XPlot), class_m_ML, class_C_ML)))
+            plt.savefig("lab05\\plots\\hists\\class_"+str(cls)+"_feature_"+str(feature)+".png")
+
+def PCA(C, m, D):
+    #get eigenvalues and eigenvectors, sorted from the smaller to the largest
+    _, U = np.linalg.eigh(C)
+
+    #computing SVD
+    U, _, _ = np.linalg.svd(C)
+
+    #changing the sign of an eigenvector to flip the image in the scatterplot
+    U[:,1] = -U[:,1]
+    
+    P = U[:, :m]
+
+    DP = np.dot(P.T, D)
+
+    return DP, P
+
+if __name__ == "__main__":
+    fileName = "datasets/trainData.csv"
+
+    D, L = load(fileName)
+    (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
+
+    classification(DTR, LTR, DTE, LTE, 1, 6)
+
+    correlation(DTR, LTR, DTE, LTE)
+
+    gaussianAssupmtion(DTR, LTR)
+
+    classification(DTR, LTR, DTE, LTE, 1, 4)
+
+    classification(DTR, LTR, DTE, LTE, 1, 2)
+    classification(DTR, LTR, DTE, LTE, 3, 4)
+
+    print("\n\nApplied PCA (m=5)")
+    DtrC, mu = datasetMean(DTR)
+    Ctr = covarianceMatrix(DtrC, DTR.shape[1])
+    _, P = PCA(Ctr, 5, DTR)
+        
+    DTR_pca = np.dot( P.T, DTR )
+    DTE_pca = np.dot( P.T, DTE )
+    classification(DTR_pca, LTR, DTE_pca, LTE, 1, 6)

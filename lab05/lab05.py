@@ -116,11 +116,11 @@ if __name__ == "__main__":
     acc, err = validate(SPost, LTE)
     print("\tError rate(densities): ", np.round(err*100), "%")
 
-    #################Part 2###################
     SPost = logPostProb(logS, prior)
     acc, err = validate(SPost, LTE)
     print("\tError rate(log-densities): ", np.round(err*100), "%")
 
+    #################Part 2###################
     #####Naive Bayes Gaussian Classifier######
     DC0, mu0 = datasetMean(DTR[:, LTR == 0])
     C0 = np.diag(np.diag(covarianceMatrix(DC0, DC0.shape[1])))
