@@ -73,12 +73,12 @@ def postProb(logS, prior):
 def logPostProb(S, prior):
     logSJoint = S + mcol(np.log(prior))
 
-    logSMarginal = vrow(scipy.special.logsumexp(logSJoint, axis=0))
+    logSMarginal = vrow(scipy.special.logsumexp(logSJoint, 0))
 
     logSPost = logSJoint - logSMarginal
 
     SPost = np.argmax(np.exp(logSPost), axis=0)
-    return SPost
+    return SPost, np.exp(logSPost)
 
 def MVGmaxPostProb(DTR, LTR, DTE, prior):
     DC0, mu0 = datasetMean(DTR[:, LTR == 0])
@@ -123,7 +123,7 @@ def costMatrix(nClasses):
     return np.ones((nClasses, nClasses)) -diag
 
 def optimalBayes(posteriors, costMatrix):
-    expectedBayesCost = np.dot(posteriors, costMatrix)
+    expectedBayesCost = posteriors @ costMatrix
     return np.argmin(expectedBayesCost, 0)
 
 def optimalBayesBinary(llr, prior, Cfn, Cfp):
@@ -138,6 +138,14 @@ def DCFu(prior, Cfn, Cfp, confMatrix):
 def DCF(prior, Cfn, Cfp, confMatrix):
     Bdummy = np.minimum((prior * Cfn), ((1 - prior) * Cfp))
     return DCFu(prior, Cfn, Cfp, confMatrix) / Bdummy
+
+def DCFMulticlass(predictedLabels, classLabels, prior_array, costMatrix, normalize=True):
+    M = confusionMatrix(predictedLabels, classLabels) # Confusion matrix
+    errorRates = M / vrow(M.sum(0))
+    bayesError = ((errorRates * costMatrix).sum(0) * prior_array.ravel()).sum()
+    if normalize:
+        return bayesError / np.min(costMatrix @ mcol(prior_array))
+    return bayesError
 
 def compute_minDCF_binary_slow(llr, classLabels, prior, Cfn, Cfp, returnThreshold=False):
     llrSorted = llr 
@@ -173,7 +181,7 @@ def computePfpPtp(llr, classLabels):
         
 
 if __name__ == "__main__":
-    D, L = load_iris()
+    """ D, L = load_iris()
     (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
     
     ####MVG confusion matrix####
@@ -193,7 +201,7 @@ if __name__ == "__main__":
     commedia_labels = np.load('lab07\\solutions\\commedia_labels.npy')
     
     print("Divina commedia conf matrix")
-    predLbl = logPostProb(commedia_ll, np.array([1./3., 1./3., 1./3.]))
+    predLbl, _ = logPostProb(commedia_ll, np.array([1./3., 1./3., 1./3.]))
     commediaConfMatrix = confusionMatrix(commedia_labels, predLbl)
     print(commediaConfMatrix)
 
@@ -213,9 +221,9 @@ if __name__ == "__main__":
         print("minDFC: ", np.round(compute_minDCF_binary_slow(commedia_llr, commedia_labels, prior, Cfn, Cfp), 3))
     
     Pfn, Pfp, _ = computePfpPtp(commedia_llr, commedia_labels)
-    """ pt.figure(0)
+    pt.figure(0)
     pt.plot(np.array(Pfp), 1-np.array(Pfn))
-    pt.show() """
+    pt.show()
     
     #Bayes error plot
     effPriorLogOdds = np.linspace(-3, 3, 21) 
@@ -233,5 +241,51 @@ if __name__ == "__main__":
     pt.ylim([0, 1.1])
     pt.xlim([-3, 3])
 
+    commedia_llr = np.load('lab07\\solutions\\commedia_llr_infpar_eps1.npy')
+    commedia_labels = np.load('lab07\\solutions\\commedia_labels_infpar_eps1.npy')
+
+    effPriorLogOdds = np.linspace(-3, 3, 21) 
+    effPriors = 1.0 / (1.0 + np.exp(-effPriorLogOdds))
+    DCFs = []
+    minDCFs = []
+    for effPrior in effPriors:
+        predLbl = optimalBayesBinary(commedia_llr, effPrior, 1.0, 1.0)  
+        confMatrix = confusionMatrix(commedia_labels, predLbl)
+        DCFs.append(DCF(effPrior, 1.0, 1.0, confMatrix))
+        minDCFs.append(compute_minDCF_binary_slow(commedia_llr, commedia_labels, effPrior, 1.0, 1.0))
+    
+    pt.plot(effPriorLogOdds, DCFs, label='DCF eps 1.0', color='y')
+    pt.plot(effPriorLogOdds, minDCFs, label='min DCF eps 1.0', color='c')
+    pt.ylim([0, 1.1])
+    pt.xlim([-3, 3])
+
     pt.legend()
-    pt.show()
+    pt.show() """
+
+    ####Multiclass task####
+    commedia_ll = np.load('lab07\\solutions\\commedia_ll.npy')
+    commedia_labels = np.load('lab07\\solutions\\commedia_labels.npy')
+
+    multiPrior = np.array([0.3, 0.4, 0.3])
+    multiCostMatrix = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]])
+    print()
+    print("eps 0.001")
+    _, postP = logPostProb(commedia_ll, multiPrior)
+    predLbl = optimalBayes(postP, multiCostMatrix)
+    print(confusionMatrix(commedia_labels, predLbl))
+    print("DCFu: ", DCFMulticlass(predLbl, commedia_labels, multiPrior, multiCostMatrix, False))
+    print("DCF: ", DCFMulticlass(predLbl, commedia_labels, multiPrior, multiCostMatrix, True))
+
+    commedia_ll = np.load('lab07\\solutions\\commedia_ll_eps1.npy')
+    commedia_labels = np.load('lab07\\solutions\\commedia_labels_eps1.npy')
+
+    print()
+    print("eps 1.0")
+    multiPrior = np.array([0.3, 0.4, 0.3])
+    multiCostMatrix = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]])
+
+    _, postP = logPostProb(commedia_ll, multiPrior)
+    predLbl = optimalBayes(postP, multiCostMatrix)
+    print(confusionMatrix(commedia_labels, predLbl))
+    print("DCFu: ", DCFMulticlass(predLbl, commedia_labels, multiPrior, multiCostMatrix, False))
+    print("DCF: ", DCFMulticlass(predLbl, commedia_labels, multiPrior, multiCostMatrix, True))
