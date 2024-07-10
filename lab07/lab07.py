@@ -181,7 +181,7 @@ def computePfpPtp(llr, classLabels):
         
 
 if __name__ == "__main__":
-    """ D, L = load_iris()
+    D, L = load_iris()
     (DTR, LTR), (DTE, LTE) = split_db_2to1(D, L)
     
     ####MVG confusion matrix####
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     pt.xlim([-3, 3])
 
     pt.legend()
-    pt.show() """
+    pt.show()
 
     ####Multiclass task####
     commedia_ll = np.load('lab07\\solutions\\commedia_ll.npy')

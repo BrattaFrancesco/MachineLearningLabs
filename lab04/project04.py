@@ -74,5 +74,7 @@ if __name__ == "__main__":
             plt.hist(classD.ravel(), bins=50, density=True)
             XPlot = np.linspace(-8, 12, 1000)
             plt.plot(XPlot.ravel(), np.exp(logpdf_GAU_ND(vrow(XPlot), class_m_ML, class_C_ML)))
+            plt.title("Class: " + str(cls) + " feature: " + str(feature))
+            plt.savefig("lab04\\plots\\%s_%d.png" %(cls, feature))
     plt.show()
             

@@ -220,9 +220,9 @@ def correlation(DTR, LTR, DTE, LTE):
     Corr1 = C1 / ( mcol(C1.diagonal()**0.5) * vrow(C1.diagonal()**0.5) )
 
     print("Correlation matrix class 0")
-    print(Corr0)
+    print(np.matrix.round(Corr0, 5))
     print("Correlation matrix class 1")
-    print(Corr1)
+    print(np.matrix.round(Corr1, 5))
 
 def gaussianAssupmtion(DTR, LTR):
     for cls in range(2):
@@ -266,7 +266,7 @@ if __name__ == "__main__":
 
     correlation(DTR, LTR, DTE, LTE)
 
-    gaussianAssupmtion(DTR, LTR)
+    #gaussianAssupmtion(DTR, LTR)
 
     classification(DTR, LTR, DTE, LTE, 1, 4)
 
