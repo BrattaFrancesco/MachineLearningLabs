@@ -9,6 +9,11 @@ def vcol(x):
 def vrow(x):
     return x.reshape((1, x.size))
 
+def datasetMean(D):
+    mu = vcol(D.mean(1))
+    DC = D - mu
+    return DC, mu
+
 def split_db_2to1(D, L, seed=0):
     
     nTrain = int(D.shape[1]*2.0/3.0)
@@ -198,9 +203,12 @@ if __name__ == '__main__':
     D, L = load(fileName)
     (DTR, LTR), (DVAL, LVAL) = split_db_2to1(D, L)
 
-    linearSVM(DTR, LTR, DVAL, LVAL)
+    _, DTR_mu = datasetMean(DTR)
+    DTRC = DTR - DTR_mu
+    DVALC = DVAL - DTR_mu
+    linearSVM(DTRC, LTR, DVALC, LVAL)
 
-    polyKernelSVM(DTR, LTR, DVAL, LVAL)
+    #polyKernelSVM(DTR, LTR, DVAL, LVAL)
             
-    rbfKernelSVM(DTR, LTR, DVAL, LVAL)
+    #rbfKernelSVM(DTR, LTR, DVAL, LVAL)
     

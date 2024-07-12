@@ -212,5 +212,5 @@ if __name__ == '__main__':
             gmm1 = train_GMM_LBG_EM(DTR[:, LTR==1], numC, covType = covType, verbose=False, psiEig = 0.01)
 
             SLLR = logpdf_GMM(DVAL, gmm1) - logpdf_GMM(DVAL, gmm0)
-            print('\tnumC = %d: minDCF%.4f / actDCF%.4f' % (numC, bayesRisk.compute_minDCF_binary_fast(SLLR, LVAL, 0.1, 1.0, 1.0), bayesRisk.compute_actDCF_binary_fast(SLLR, LVAL, 0.1, 1.0, 1.0)))
+            print('\tnumC = %d: minDCF=%.4f / actDCF=%.4f' % (numC, bayesRisk.compute_minDCF_binary_fast(SLLR, LVAL, 0.1, 1.0, 1.0), bayesRisk.compute_actDCF_binary_fast(SLLR, LVAL, 0.1, 1.0, 1.0)))
         print()
